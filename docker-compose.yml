@@ -1,6 +1,6 @@
 services:
   mongodb:
-    image: mongo:7
+    image: mongo:4.4.30-nanoserver
     restart: unless-stopped
     volumes:
       - mongodb-data:/data/db

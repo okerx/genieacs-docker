@@ -19,6 +19,7 @@ services:
       GENIEACS_UI_JWT_SECRET: ${GENIEACS_UI_JWT_SECRET:-change-me-before-production}
       GENIEACS_EXT_DIR: /opt/genieacs/ext
       NODE_OPTIONS: --enable-source-maps
+      SERVICE_PORT: ${GENIEACS_CWMP_HOST_PORT:-7547}
     ports:
       - "${GENIEACS_CWMP_HOST_PORT:-7547}:7547"
     volumes:

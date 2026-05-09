@@ -4,18 +4,6 @@ services:
     restart: unless-stopped
     volumes:
       - mongodb-data:/data/db
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "mongosh",
-          "--quiet",
-          "--eval",
-          "db.adminCommand('ping').ok",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 12
 
   cwmp:
     build:
@@ -25,7 +13,7 @@ services:
     command: ["genieacs-cwmp"]
     depends_on:
       mongodb:
-        condition: service_healthy
+        condition: service_started
     environment: &genieacs-env
       GENIEACS_MONGODB_CONNECTION_URL: mongodb://mongodb/genieacs
       GENIEACS_UI_JWT_SECRET: ${GENIEACS_UI_JWT_SECRET:-change-me-before-production}
@@ -42,7 +30,7 @@ services:
     command: ["genieacs-nbi"]
     depends_on:
       mongodb:
-        condition: service_healthy
+        condition: service_started
       cwmp:
         condition: service_started
     environment: *genieacs-env
@@ -57,7 +45,7 @@ services:
     command: ["genieacs-fs"]
     depends_on:
       mongodb:
-        condition: service_healthy
+        condition: service_started
       cwmp:
         condition: service_started
     environment: *genieacs-env
@@ -72,7 +60,7 @@ services:
     command: ["genieacs-ui"]
     depends_on:
       mongodb:
-        condition: service_healthy
+        condition: service_started
       cwmp:
         condition: service_started
       nbi:

@@ -1,0 +1,90 @@
+services:
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  cwmp:
+    build:
+      context: .
+    image: local/genieacs:1.2.16
+    restart: unless-stopped
+    command: ["genieacs-cwmp"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment: &genieacs-env
+      GENIEACS_MONGODB_CONNECTION_URL: mongodb://mongodb/genieacs
+      GENIEACS_UI_JWT_SECRET: ${GENIEACS_UI_JWT_SECRET:-change-me-before-production}
+      GENIEACS_EXT_DIR: /opt/genieacs/ext
+      NODE_OPTIONS: --enable-source-maps
+    ports:
+      - "${GENIEACS_CWMP_HOST_PORT:-7547}:7547"
+    volumes:
+      - genieacs-ext:/opt/genieacs/ext
+
+  nbi:
+    image: local/genieacs:1.2.16
+    restart: unless-stopped
+    command: ["genieacs-nbi"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      cwmp:
+        condition: service_started
+    environment: *genieacs-env
+    ports:
+      - "${GENIEACS_NBI_HOST_PORT:-7557}:7557"
+    volumes:
+      - genieacs-ext:/opt/genieacs/ext
+
+  fs:
+    image: local/genieacs:1.2.16
+    restart: unless-stopped
+    command: ["genieacs-fs"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      cwmp:
+        condition: service_started
+    environment: *genieacs-env
+    ports:
+      - "${GENIEACS_FS_HOST_PORT:-7567}:7567"
+    volumes:
+      - genieacs-ext:/opt/genieacs/ext
+
+  ui:
+    image: local/genieacs:1.2.16
+    restart: unless-stopped
+    command: ["genieacs-ui"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      cwmp:
+        condition: service_started
+      nbi:
+        condition: service_started
+      fs:
+        condition: service_started
+    environment: *genieacs-env
+    ports:
+      - "${GENIEACS_UI_HOST_PORT:-3000}:3000"
+    volumes:
+      - genieacs-ext:/opt/genieacs/ext
+
+volumes:
+  mongodb-data:
+  genieacs-ext:
